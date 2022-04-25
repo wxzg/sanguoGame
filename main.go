@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	config "sanguoServer/conf"
-	"sanguoServer/login"
 	"sanguoServer/net"
+	"sanguoServer/server/login"
 )
 
 func main(){

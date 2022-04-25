@@ -32,7 +32,7 @@ type WSConn interface {
 	Push(name string, data interface{})
 }
 
-// H
+// Handshake 握手
 type Handshake struct {
 	Key string `json:"key"`
 }

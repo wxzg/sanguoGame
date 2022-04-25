@@ -3,6 +3,7 @@ package net
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/forgoer/openssl"
 	"github.com/gorilla/websocket"
 	"log"
@@ -135,6 +136,8 @@ func (w *wsServer) readMsgLoop() {
 		//3. data 转为body
 		body := &ReqBody{}
 		err = json.Unmarshal(data,body)
+		fmt.Printf("body-Type:%T, value:%v",body,body)
+		fmt.Println()
 		if err != nil {
 			log.Println("数据格式有误，非法格式:",err)
 		}else{

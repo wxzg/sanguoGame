@@ -1,12 +1,15 @@
 package login
 
 import (
-	"sanguoServer/login/controller"
+	"sanguoServer/db"
 	"sanguoServer/net"
+	"sanguoServer/server/login/controller"
 )
 
 var Router = net.NewRouter()
 func Init()  {
+	//初始化数据库
+	db.DBInit()
 	//还有别的初始化方法
 	initRouter()
 }
