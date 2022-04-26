@@ -1,6 +1,9 @@
 package net
 
-import "strings"
+import (
+	"log"
+	"strings"
+)
 
 // HandlerFunc 我们具体路由的业务处理函数
 type HandlerFunc func(req *WsMsgReq, rsp *WsMsgRsp)
@@ -23,12 +26,22 @@ func (r *Router) Group(prefix string) *group {
 	r.group = append(r.group,g)
 	return g
 }
-//exec方法就是再找到对应的路由组别以后，根据name匹配，将匹配到的具体路由的处理函数拿来处理
+
+//exec方法就是在找到对应的路由组别以后，根据name匹配，将匹配到的具体路由的处理函数拿来处理
 func (g *group) exec(name string, req *WsMsgReq, rsp *WsMsgRsp) {
 	h := g.handlerMap[name]
 	if h != nil {
 		h(req,rsp)
+	}else{
+
+		gateh := g.handlerMap["*"]
+		if gateh != nil {
+			gateh(req, rsp)
+		}else {
+			log.Println("路由不匹配")
+		}
 	}
+
 }
 
 /*
@@ -46,14 +59,19 @@ func NewRouter() *Router  {
 func (r *Router) Run(req *WsMsgReq, rsp *WsMsgRsp) {
 	//req.Body.Name 路径 登录业务 account.login （account组标识）login 路由标识
 	strs := strings.Split(req.Body.Name,".")
+
 	prefix := ""
 	name := ""
+
 	if len(strs) == 2 {
 		prefix = strs[0]
 		name = strs[1]
 	}
+
 	for _,g := range r.group{
 		if g.prefix == prefix {
+			g.exec(name,req,rsp)
+		}else if g.prefix == "*"{
 			g.exec(name,req,rsp)
 		}
 	}
