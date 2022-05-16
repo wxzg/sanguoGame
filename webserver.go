@@ -13,6 +13,7 @@ func main(){
 	host := config.File.MustValue("web_server","host","127.0.0.1")
 	port := config.File.MustValue("web_server","port","8088")
 
+	//启动一个gin的router
 	router := gin.Default()
 	//路由
 	web.Init(router)

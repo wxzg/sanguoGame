@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	config "sanguoServer/conf"
 	"sanguoServer/net"
@@ -25,7 +24,6 @@ func main(){
 	port := config.File.MustValue("gate_server","port","8004")
 	s := net.NewServer(host+":"+port)
 	gate.InitGate()
-	fmt.Println(1)
 	s.Router(gate.Router)
 	s.Start()
 	log.Println("网关服务启动成功")

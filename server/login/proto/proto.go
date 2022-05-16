@@ -1,6 +1,5 @@
 package proto
 
-
 // LoginRsp:RspBody - Msg
 type LoginRsp struct {
 	Username 	string    	`json:"username"`

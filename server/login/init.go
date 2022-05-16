@@ -6,7 +6,9 @@ import (
 	"sanguoServer/server/login/controller"
 )
 
+// 新建一个login路由
 var Router = net.NewRouter()
+
 func Init()  {
 	//初始化数据库
 	db.DBInit()

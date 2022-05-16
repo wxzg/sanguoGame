@@ -58,8 +58,13 @@ func (s *server) wsHandler(w http.ResponseWriter, r *http.Request)  {
 	//发消息的时候 把消息当做路由 来去处理 消息是有格式的，先定义消息的格式
 	//客户端 发消息的时候 {Name:"account.login"} 收到之后 进行解析 认为想要处理登录逻辑
 
+	//新建一个websocket
 	wsServer := NewWsServer(wsConn)
+	//给websocket服务添加路由
 	wsServer.Router(s.router)
+	//启动websocket服务
 	wsServer.Start()
+	//第一次握手，用以确保连通
 	wsServer.Handshake()
 }
+

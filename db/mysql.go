@@ -11,7 +11,7 @@ import (
 var Eg *xorm.Engine
 
 func DBInit(){
-	//获取ini-mysql配置
+	//获取conf.ini-mysql配置
 	sqlConfig, err := config.File.GetSection("mysql")
 	if err != nil {
 		log.Println("数据库配置获取出错",err)
@@ -26,6 +26,7 @@ func DBInit(){
 		sqlConfig["port"],
 		sqlConfig["dbname"],
 	)
+	//新建xorm单表引擎
 	Eg, err = xorm.NewEngine("mysql", dbConn)
 	if err != nil{
 		log.Println("数据库连接失败",err)
@@ -38,6 +39,7 @@ func DBInit(){
 		log.Println("数据库ping失败",err)
 		panic(err)
 	}
+
 	//最大空闲连接数
 	maxIdle := config.File.MustInt("mysql", "max_idle", 2)
 	//最大打开连接数

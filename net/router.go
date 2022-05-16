@@ -18,6 +18,7 @@ func (g *group) AddRouter(name string,handlerFunc HandlerFunc)  {
 	g.handlerMap[name] = handlerFunc
 }
 
+//Group 根据前缀给路由新建一个路由组，返回一个Group，但这是router上的方法
 func (r *Router) Group(prefix string) *group {
 	g := &group{
 		prefix: prefix,
@@ -29,13 +30,16 @@ func (r *Router) Group(prefix string) *group {
 
 //exec方法就是在找到对应的路由组别以后，根据name匹配，将匹配到的具体路由的处理函数拿来处理
 func (g *group) exec(name string, req *WsMsgReq, rsp *WsMsgRsp) {
+	//根据具体路由（如login）匹配业务处理函数
 	h := g.handlerMap[name]
 	if h != nil {
+		//匹配到了就执行
 		h(req,rsp)
 	}else{
-
+		//如果是匹配不到再试试匹配“*”
 		gateh := g.handlerMap["*"]
 		if gateh != nil {
+			//如果匹配到了表示网关那边有处理函数，执行
 			gateh(req, rsp)
 		}else {
 			log.Println("路由不匹配")
@@ -51,6 +55,7 @@ type Router struct {
 	group []*group
 }
 
+// NewRouter 新建一个路由
 func NewRouter() *Router  {
 	return &Router{}
 }
@@ -67,11 +72,13 @@ func (r *Router) Run(req *WsMsgReq, rsp *WsMsgRsp) {
 		prefix = strs[0]
 		name = strs[1]
 	}
-
+	//这里主要是看看分组能不能匹配上，比如这里就是要匹配到account组，然后将login传过去
 	for _,g := range r.group{
 		if g.prefix == prefix {
+			// 这里进行具体的业务处理
 			g.exec(name,req,rsp)
 		}else if g.prefix == "*"{
+			//如果是网关“*”来了也要能通过
 			g.exec(name,req,rsp)
 		}
 	}
