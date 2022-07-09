@@ -1,9 +1,9 @@
 package gatecontrollor
 
 import (
-	"log"
 	config "sanguoServer/conf"
 	"sanguoServer/net"
+	"sanguoServer/utils"
 	"strings"
 	"sync"
 )
@@ -24,14 +24,14 @@ func (h *Handler) Router(r *net.Router){
 	h.loginProxy = config.File.MustValue("gate_server", "login_proxy", "ws://127.0.0.1:8003")
 	//游戏服务器代理
 	h.gameProxy = config.File.MustValue("gate_server", "game_proxy", "ws://127.0.0.1:8001")
+	//创建路由组别
 	g := r.Group("*")
+	//  */* 匹配一切路由，全都放到h.all中处理
 	g.AddRouter("*", h.all)
 }
 
 func (h *Handler) all(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
-	log.Println("网关处理器")
-
-	//account转发
+	//先拿到路由名
 	name := req.Body.Name
 	proxyStr := ""
 	//判断是不是登录服务
@@ -39,12 +39,57 @@ func (h *Handler) all(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 		proxyStr = h.loginProxy
 	}
 
-	loginProxy := net.NewProxyClient(proxyStr)
+	if proxyStr != "" {
+		rsp.Body.Code = utils.ProxyNotInConnect
+		return
+	}
 
-	loginProxy.Connect()
+	h.proxyMutex.Lock()
+	_, ok := h.proxyMap[proxyStr]
+	if !ok {
+		h.proxyMap[proxyStr] = make(map[int64]*net.ProxyClient)
+	}
+	h.proxyMutex.Unlock()
+
+	cidValue, _ := req.Conn.GetProperty("cid")
+	cid := cidValue.(int64)
+	proxy, ok := h.proxyMap[proxyStr][cid]
+	if !ok {
+		proxy = net.NewProxyClient(proxyStr)
+		//把连接存起来
+		h.proxyMutex.Lock()
+		h.proxyMap[proxyStr][cid] = proxy
+		h.proxyMutex.Unlock()
+
+		proxy.SetProperty("cid", cid)
+		proxy.SetProperty("gateConn", req.Conn)
+		proxy.SetProperty("proxy", proxyStr)
+		proxy.SetOnPush(h.onPush)
+	}
+
+	rsp.Body.Seq = req.Body.Seq
+	rsp.Body.Name = req.Body.Name
+	r, err := proxy.Send(req.Body.Name, req.Body.Msg)
+	if err == nil {
+		rsp.Body.Code = r.Code
+		rsp.Body.Msg = r.Msg
+	} else {
+		rsp.Body.Code = utils.ProxyConnectError
+		rsp.Body.Msg = nil
+	}
+}
+
+func (h *Handler) onPush(conn *net.ClientConn, body *net.RspBody) {
+	gateConn, err := conn.GetProperty("gateConn")
+	if err != nil {
+		return
+	}
+	wc := gateConn.(net.WSConn)
+	wc.Push(body.Name, body.Msg)
 }
 
 //判断路由前缀是否是account
 func isAccount(name string) bool {
 	return strings.HasPrefix(name, "account.")
 }
+

@@ -20,13 +20,17 @@ type wsServer struct {
 	propertyLock sync.RWMutex	//存储属性时需要加锁
 }
 
+var cid int64
 func NewWsServer(wsConn *websocket.Conn) *wsServer {
-	return &wsServer{
+	s := &wsServer{
 		wsConn: wsConn,
 		outChan: make(chan *WsMsgRsp, 1000),
 		property: make(map[string]interface{}),
 		Seq: 0,
 	}
+	cid++
+	s.SetProperty("cid",cid)
+	return s
 }
 
 func (w *wsServer) Router(router *Router)  {
