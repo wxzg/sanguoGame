@@ -12,6 +12,7 @@ import (
 type server struct {
 	addr string
 	router *Router
+	needSecret bool
 }
 /*
 	2. 暴露对外定义的接口，返回一个*server
@@ -20,6 +21,10 @@ func NewServer(addr string) *server  {
 	return &server{
 		addr: addr,
 	}
+}
+
+func (s *server) NeedSecret(needSecret bool) {
+	s.needSecret = needSecret
 }
 
 func (s *server) Router(router *Router) {
@@ -59,7 +64,7 @@ func (s *server) wsHandler(w http.ResponseWriter, r *http.Request)  {
 	//客户端 发消息的时候 {Name:"account.login"} 收到之后 进行解析 认为想要处理登录逻辑
 
 	//新建一个websocket
-	wsServer := NewWsServer(wsConn)
+	wsServer := NewWsServer(wsConn, s.needSecret)
 	//给websocket服务添加路由
 	wsServer.Router(s.router)
 	//启动websocket服务

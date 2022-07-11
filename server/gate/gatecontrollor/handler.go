@@ -1,6 +1,7 @@
 package gatecontrollor
 
 import (
+	"log"
 	config "sanguoServer/conf"
 	"sanguoServer/net"
 	"sanguoServer/utils"
@@ -39,7 +40,7 @@ func (h *Handler) all(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 		proxyStr = h.loginProxy
 	}
 
-	if proxyStr != "" {
+	if proxyStr == "" {
 		rsp.Body.Code = utils.ProxyNotInConnect
 		return
 	}
@@ -51,11 +52,24 @@ func (h *Handler) all(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	}
 	h.proxyMutex.Unlock()
 
-	cidValue, _ := req.Conn.GetProperty("cid")
+	cidValue, err := req.Conn.GetProperty("cid")
+	if err != nil {
+		log.Println("cid未取到", err)
+		rsp.Body.Code = utils.InvalidParam
+		return
+	}
 	cid := cidValue.(int64)
 	proxy, ok := h.proxyMap[proxyStr][cid]
 	if !ok {
 		proxy = net.NewProxyClient(proxyStr)
+		err := proxy.Connect()
+		if err != nil{
+			h.proxyMutex.Lock()
+			delete(h.proxyMap[proxyStr],cid)
+			h.proxyMutex.Unlock()
+			rsp.Body.Code = utils.ProxyConnectError
+			return
+		}
 		//把连接存起来
 		h.proxyMutex.Lock()
 		h.proxyMap[proxyStr][cid] = proxy
@@ -69,6 +83,7 @@ func (h *Handler) all(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 
 	rsp.Body.Seq = req.Body.Seq
 	rsp.Body.Name = req.Body.Name
+	log.Println(req)
 	r, err := proxy.Send(req.Body.Name, req.Body.Msg)
 	if err == nil {
 		rsp.Body.Code = r.Code

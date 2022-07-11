@@ -40,3 +40,9 @@ type WSConn interface {
 type Handshake struct {
 	Key string `json:"key"`
 }
+
+//心跳检测
+type Heartbeat struct {
+	CTime	int64 	`json:"ctime"`
+	STime	int64 	`json:"stime"`
+}

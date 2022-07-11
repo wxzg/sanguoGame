@@ -5,9 +5,11 @@ import (
 	"errors"
 	"github.com/forgoer/openssl"
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 	"log"
 	"sanguoServer/utils"
 	"sync"
+	"time"
 )
 
 //websocket服务
@@ -18,15 +20,17 @@ type wsServer struct {
 	Seq			int64		//序列号
 	property 	map[string]interface{} //用来存储request属性
 	propertyLock sync.RWMutex	//存储属性时需要加锁
+	needSecret bool
 }
 
 var cid int64
-func NewWsServer(wsConn *websocket.Conn) *wsServer {
+func NewWsServer(wsConn *websocket.Conn, needSecret bool) *wsServer {
 	s := &wsServer{
 		wsConn: wsConn,
 		outChan: make(chan *WsMsgRsp, 1000),
 		property: make(map[string]interface{}),
 		Seq: 0,
+		needSecret: needSecret,
 	}
 	cid++
 	s.SetProperty("cid",cid)
@@ -124,7 +128,7 @@ func (w *wsServer) readMsgLoop() {
 	for  {
 		_, data, err := w.wsConn.ReadMessage()
 		if err != nil {
-			log.Println("收消息出现错误:",err)
+			log.Println("服务端收消息出现错误:",err)
 			break
 		}
 		//收到消息 解析消息 前端发送过来的消息 就是json格式
@@ -135,19 +139,22 @@ func (w *wsServer) readMsgLoop() {
 			continue
 		}
 		//2. 前端的消息 加密消息 进行解密
-		secretKey,err := w.GetProperty("secretKey")
-		if err == nil {
-			//有加密
-			key := secretKey.(string)
-			//客户端传过来的数据是加密的 需要解密
-			d, err := utils.AesCBCDecrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
-			if err != nil {
-				log.Println("数据格式有误，解密失败:",err)
-				//出错后 重新发起握手
-				w.Handshake()
-			}else{
-				//否则d就是解密后的数据
-				data = d
+		if w.needSecret {
+
+			secretKey,err := w.GetProperty("secretKey")
+			if err == nil {
+				//有加密
+				key := secretKey.(string)
+				//客户端传过来的数据是加密的 需要解密
+				d, err := utils.AesCBCDecrypt(data, []byte(key), []byte(key), openssl.ZEROS_PADDING)
+				if err != nil {
+					log.Println("数据格式有误，解密失败:",err)
+					//出错后 重新发起握手
+					w.Handshake()
+				}else{
+					//否则d就是解密后的数据
+					data = d
+				}
 			}
 		}
 		//3. data 转为body ，这里data依旧是JSON数据
@@ -157,11 +164,20 @@ func (w *wsServer) readMsgLoop() {
 		if err != nil {
 			log.Println("数据格式有误，非法格式:",err)
 		}else{
+			log.Println("服务端读请求：",body)
 			// 真正获取到前端传递的数据了，拿上这些数据 去具体的业务进行处理
 			req := &WsMsgReq{Conn: w, Body: body}
 			rsp := &WsMsgRsp{Body: &RspBody{Name: body.Name, Seq: req.Body.Seq}}
-			//拿去给路由处理
-			w.router.Run(req,rsp)
+			if req.Body.Name == "heartbeat" {
+				h := &Heartbeat{}
+				mapstructure.Decode(req.Body.Msg, h)
+				h.STime = time.Now().UnixNano()/1e6
+				rsp.Body.Msg = h
+			} else {
+				//拿去给路由处理
+				w.router.Run(req,rsp)
+			}
+
 			//将rsp数据传给outChan，因为rsp是引用数据，因此那边处理完以后这里会同步更新
 			w.outChan <- rsp
 		}

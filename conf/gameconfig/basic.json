@@ -1,0 +1,96 @@
+ {
+  "conscript": {
+    "des": "每征一个兵需要消耗的资源",
+    "cost_wood":10,
+    "cost_iron":10,
+    "cost_stone":0,
+    "cost_grain":10,
+    "cost_gold":1,
+    "cost_time":1
+  },
+  "general": {
+    "des": "武将的一些配置",
+    "physical_power_limit": 100,
+    "cost_physical_power": 1,
+    "recovery_physical_power": 10,
+    "reclamation_time": 30,
+    "reclamation_cost": 1,
+    "draw_general_cost": 30,
+    "pr_point": 1000,
+    "limit": 500
+  },
+  "role": {
+    "des": "角色的一些配置",
+    "wood": 1000000,
+    "iron": 1000000,
+    "stone": 1000000,
+    "grain": 1000000,
+    "gold": 1000000,
+    "decree": 20,
+    "wood_yield": 1000000,
+    "iron_yield": 1000000,
+    "stone_yield": 1000000,
+    "grain_yield": 1000000,
+    "gold_yield": 1000000,
+    "depot_capacity": 100000000000,
+    "build_limit": 20,
+    "recovery_time": 20,
+    "decree_limit": 20,
+    "collect_times_limit": 3,
+    "collect_interval": 30,
+    "pos_tag_limit": 10
+  },
+  "city": {
+    "des": "城池的一些配置",
+    "cost": 75,
+    "durable": 100000,
+    "transform_rate": 50,
+    "recovery_time": 600
+  },
+  "build": {
+    "des": "建筑的一些配置",
+    "war_free": 20,
+    "giveUp_time": 30,
+    "fortress_limit": 10
+  },
+  "npc": {
+    "des": "npc一些配置",
+    "levels": [
+      {
+        "soilders": 100
+      },
+      {
+        "soilders": 200
+      },
+      {
+        "soilders": 300
+      },
+      {
+        "soilders": 400
+      },
+      {
+        "soilders": 500
+      },
+      {
+        "soilders": 600
+      },
+      {
+        "soilders": 700
+      },
+      {
+        "soilders": 800
+      },
+      {
+        "soilders": 900
+      },
+      {
+        "soilders": 1000
+      }
+    ]
+  },
+  "union": {
+    "des": "联盟的一些配置",
+    "member_limit": 100
+  }
+
+}

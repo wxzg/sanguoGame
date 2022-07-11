@@ -64,18 +64,22 @@ func (c *ClientConn) Start() bool {
 }
 
 func (c *ClientConn)waitHandShake() bool {
-	//防止超时
-	ctx, cancel := context.WithTimeout(context.Background(),5*time.Second)
-	defer cancel()
-	//等待握手的成功 等待握手的消息
-	select {
-	case _ = <- c.handshakeChan:
-		log.Println("握手成功")
-		return true
-	case  <- ctx.Done():
-		log.Println("握手超时了")
-		return false
+	if !c.handshake{
+
+		//防止超时
+		ctx, cancel := context.WithTimeout(context.Background(),5*time.Second)
+		defer cancel()
+		//等待握手的成功 等待握手的消息
+		select {
+		case _ = <- c.handshakeChan:
+			log.Println("握手成功")
+			return true
+		case  <- ctx.Done():
+			log.Println("握手超时了")
+			return false
+		}
 	}
+	return true
 }
 
 func (c *ClientConn) wsReadLoop() {
@@ -145,6 +149,7 @@ func (c *ClientConn) wsReadLoop() {
 					c.handshakeChan <- true
 				}else{
 					if c.onPush != nil {
+						//这里相当于把服务端返还的信息push给前端
 						c.onPush(c,body)
 					}
 				}
@@ -203,7 +208,6 @@ func NewClientConn(wsConn *websocket.Conn) *ClientConn{
 	return &ClientConn{
 		wsConn: wsConn,
 		handshakeChan: make(chan bool),
-		handshake: false,
 		Seq: 0,
 		isClosed: false,
 		property: make(map[string]interface{}),
@@ -237,6 +241,7 @@ func (c *ClientConn) Addr() string {
 	return c.wsConn.RemoteAddr().String()
 }
 
+// 这个函数可以把响应的消息返还给服务端
 func (c *ClientConn) Push(name string, data interface{}){
 	rsp := &WsMsgRsp{Body: &RspBody{Name: name, Msg: data, Seq: 0}}
 	c.write(rsp.Body)
@@ -259,6 +264,7 @@ func (c *ClientConn) Send(name string, msg interface{}) (*RspBody, error) {
 	rsp := &RspBody{Name: name,Seq: seq,Code: utils.OK}
 	//req请求
 	req := &ReqBody{Seq: seq,Name: name,Msg: msg}
+	log.Println(req)
 	//将请求发给服务端
 	err := c.write(req)
 

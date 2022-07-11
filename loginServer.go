@@ -12,6 +12,7 @@ func main(){
 	port := config.File.MustValue("login_server","port","8003")
 	//新建一个webSocket服务
 	s := net.NewServer(host+":"+port)
+	s.NeedSecret(false)
 	//初始化数据库和登录路由
 	login.Init()
 	//将登录路由放到ws服务中
