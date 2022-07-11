@@ -8,10 +8,9 @@ import (
 )
 
 var Router = &net.Router{}
-var Base = &gameconfig.Basic{}
 func Init(){
 	db.DBInit()
-	Base.Load()
+	gameconfig.Base.Load()
 	gameconfig.MapBuilder.Load()
 	initRouter()
 }

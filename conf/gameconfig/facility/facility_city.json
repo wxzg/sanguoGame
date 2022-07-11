@@ -1,0 +1,163 @@
+{
+  "title": "主城配置",
+  "name": "主城",
+  "type": 0,
+  "des": "提高本城的耐久上限部队统帅上限",
+  "additions": [
+    1,
+    2
+  ],
+  "conditions": [],
+  "levels": [
+    {
+      "level": 1,
+      "values": [
+        10000,
+        5
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 1000,
+        "wood": 1000,
+        "iron": 1000,
+        "stone": 1000
+      },
+      "time": 10
+    },
+    {
+      "level": 2,
+      "values": [
+        20000,
+        10
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 2000,
+        "wood": 2000,
+        "iron": 2000,
+        "stone": 2000
+      },
+      "time": 20
+    },
+    {
+      "level": 3,
+      "values": [
+        30000,
+        15
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 3000,
+        "wood": 3000,
+        "iron": 3000,
+        "stone": 3000
+      },
+      "time": 30
+    },
+    {
+      "level": 4,
+      "values": [
+        40000,
+        20
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 4000,
+        "wood": 4000,
+        "iron": 4000,
+        "stone": 4000
+      },
+      "time": 40
+    },
+    {
+      "level": 5,
+      "values": [
+        50000,
+        25
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 5000,
+        "wood": 5000,
+        "iron": 5000,
+        "stone": 5000
+      },
+      "time": 50
+    },
+    {
+      "level": 6,
+      "values": [
+        60000,
+        30
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 6000,
+        "wood": 6000,
+        "iron": 6000,
+        "stone": 6000
+      },
+      "time": 60
+    },
+    {
+      "level": 7,
+      "values": [
+        70000,
+        35
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 7000,
+        "wood": 7000,
+        "iron": 7000,
+        "stone": 7000
+      },
+      "time": 70
+    },
+    {
+      "level": 8,
+      "values": [
+        80000,
+        40
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 8000,
+        "wood": 8000,
+        "iron": 8000,
+        "stone": 8000
+      },
+      "time": 80
+    },
+    {
+      "level": 9,
+      "values": [
+        90000,
+        45
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 9000,
+        "wood": 9000,
+        "iron": 9000,
+        "stone": 9000
+      },
+      "time": 90
+    },
+    {
+      "level": 10,
+      "values": [
+        100000,
+        50
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 10000,
+        "wood": 10000,
+        "iron": 10000,
+        "stone": 10000
+      },
+      "time": 100
+    }
+  ]
+}

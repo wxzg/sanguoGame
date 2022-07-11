@@ -1,7 +1,5 @@
 package model
 
-import model2 "sanguoServer/db/model"
-
 type MyRolePropertyReq struct {
 
 }
@@ -34,6 +32,12 @@ type MapRoleBuild struct {
 	GiveUpTime	int64 	`json:"giveUp_time"`	//领地到了这个时间会被放弃
 }
 
+type GSkill struct {
+	Id    int `json:"id"`
+	Lv    int `json:"lv"`
+	CfgId int `json:"cfgId"`
+}
+
 type General struct {
 	Id        		int     	`json:"id"`
 	CfgId     		int			`json:"cfgId"`
@@ -54,7 +58,7 @@ type General struct {
 	StarLv          int8    	`json:"star_lv"`
 	Star            int8    	`json:"star"`
 	ParentId        int     	`json:"parentId"`
-	Skills			[]*model2.GSkill	`json:"skills"`
+	Skills			[]*GSkill	`json:"skills"`
 	State     		int8    	`json:"state"`
 
 }

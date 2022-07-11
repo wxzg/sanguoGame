@@ -36,3 +36,5 @@ type EnterServerRsp struct{
 	Time  		int64 		`json:"time"`
 	Token		string		`json:"token"`
 }
+
+

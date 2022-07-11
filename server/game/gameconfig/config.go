@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+var Base = &Basic{}
+
 type conscript struct {
 	Des       string `json:"des"`
 	CostWood  int    `json:"cost_wood"`
@@ -117,4 +119,5 @@ func (b *Basic) Load(){
 		panic(err)
 	}
 }
+
 

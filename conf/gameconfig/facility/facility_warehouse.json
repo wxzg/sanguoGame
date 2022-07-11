@@ -1,0 +1,129 @@
+{
+  "title": "城内设施-仓库配置",
+  "name": "仓库",
+  "type": 25,
+  "des": "每升一级增加仓库容量",
+  "additions": [
+    23
+  ],
+  "conditions": [
+    {
+      "type": 0,
+      "level": 2
+    }
+  ],
+  "levels": [
+    {
+      "level": 1,
+      "values": [
+        10000
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 1000,
+        "wood": 1000,
+        "iron": 1000,
+        "stone": 1000
+      },
+      "time": 10
+    },
+    {
+      "level": 2,
+      "values": [
+        20000
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 2000,
+        "wood": 2000,
+        "iron": 2000,
+        "stone": 2000
+      },
+      "time": 20
+    },
+    {
+      "level": 3,
+      "values": [
+        30000
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 3000,
+        "wood": 3000,
+        "iron": 3000,
+        "stone": 3000
+      },
+      "time": 30
+    },
+    {
+      "level": 4,
+      "values": [
+        40000
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 4000,
+        "wood": 4000,
+        "iron": 4000,
+        "stone": 4000
+      },
+      "time": 40
+    },
+    {
+      "level": 5,
+      "values": [
+        50000
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 5000,
+        "wood": 5000,
+        "iron": 5000,
+        "stone": 5000
+      },
+      "time": 50
+    },
+    {
+      "level": 6,
+      "values": [
+        60000
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 6000,
+        "wood": 6000,
+        "iron": 6000,
+        "stone": 6000
+      },
+      "time": 60
+    },
+    {
+      "level": 7,
+      "values": [
+        70000
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 7000,
+        "wood": 7000,
+        "iron": 7000,
+        "stone": 7000
+      },
+      "time": 70
+    },
+    {
+      "level": 8,
+      "values": [
+        80000
+      ],
+      "need": {
+        "decree": 0,
+        "grain": 8000,
+        "wood": 8000,
+        "iron": 8000,
+        "stone": 8000
+      },
+      "time": 80
+    }
+  ]
+}

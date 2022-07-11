@@ -208,15 +208,10 @@ type General struct {
 	Star          int8  			`xorm:"star"`
 	ParentId      int  				`xorm:"parentId"`
 	Skills		  string			`xorm:"skills"`
-	SkillsArray   []*GSkill			`xorm:"-"`
+	SkillsArray   []*model.GSkill	`xorm:"-"`
 	State         int8 				`xorm:"state"`
 }
 
-type GSkill struct {
-	Id    int `json:"id"`
-	Lv    int `json:"lv"`
-	CfgId int `json:"cfgId"`
-}
 
 func (r *Role) ToModel() interface{}{
 	m := model.Role{}

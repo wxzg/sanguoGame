@@ -7,7 +7,7 @@ import (
 	model2 "sanguoServer/db/model"
 	"sanguoServer/net"
 	"sanguoServer/server/common"
-	"sanguoServer/server/game"
+	"sanguoServer/server/game/gameconfig"
 	"sanguoServer/server/game/logic"
 	"sanguoServer/server/game/model"
 	"sanguoServer/utils"
@@ -32,13 +32,14 @@ func (r *roleRouter) enterRole (req *net.WsMsgReq, rsp *net.WsMsgRsp){
 	//根据角色id 查询角色拥有的资源roleRes ， 如果有资源就返回，没有就初始化资源
 	reqObj := &model.EnterServerReq{}
 	rspObj := &model.EnterServerRsp{}
-	err := mapstructure.Decode(reqObj, req.Body.Msg)
-	rsp.Body.Seq = req.Body.Seq
-	rsp.Body.Name = req.Body.Name
+	err := mapstructure.Decode(req.Body.Msg, reqObj)
 	if err != nil {
+		log.Println(err)
 		rsp.Body.Code = utils.InvalidParam
 		return
 	}
+	rsp.Body.Seq = req.Body.Seq
+	rsp.Body.Name = req.Body.Name
 
 	token := reqObj.Session
 	_, claim, err := utils.ParseToken(token)
@@ -77,12 +78,12 @@ func (r *roleRouter) enterRole (req *net.WsMsgReq, rsp *net.WsMsgRsp){
 	if !ok {
 		roleRes = &model2.RoleRes{
 			RId: role.RId,
-			Wood:          game.Base.Role.Wood,
-			Iron:          game.Base.Role.Iron,
-			Stone:         game.Base.Role.Stone,
-			Grain:         game.Base.Role.Grain,
-			Gold:          game.Base.Role.Gold,
-			Decree:        game.Base.Role.Decree}
+			Wood:          gameconfig.Base.Role.Wood,
+			Iron:          gameconfig.Base.Role.Iron,
+			Stone:         gameconfig.Base.Role.Stone,
+			Grain:         gameconfig.Base.Role.Grain,
+			Gold:          gameconfig.Base.Role.Gold,
+			Decree:        gameconfig.Base.Role.Decree}
 	}
 
 	rspObj.RoleRes = roleRes.ToModel().(model.RoleRes)
@@ -126,7 +127,7 @@ func (r *roleRouter) myProperty(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 		return
 	}
 
-	rid := role.(*model.Role).RId
+	rid := role.(*model2.Role).RId
 	//查资源
 	rspObj.RoleRes,err = logic.RoleServer.GetRoleRes(rid)
 	if err != nil {

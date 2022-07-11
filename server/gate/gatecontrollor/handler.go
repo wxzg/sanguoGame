@@ -38,7 +38,10 @@ func (h *Handler) all(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	//判断是不是登录服务
 	if isAccount(name){
 		proxyStr = h.loginProxy
+	}else{
+		proxyStr = h.gameProxy
 	}
+
 
 	if proxyStr == "" {
 		rsp.Body.Code = utils.ProxyNotInConnect
@@ -58,6 +61,7 @@ func (h *Handler) all(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 		rsp.Body.Code = utils.InvalidParam
 		return
 	}
+
 	cid := cidValue.(int64)
 	proxy, ok := h.proxyMap[proxyStr][cid]
 	if !ok {

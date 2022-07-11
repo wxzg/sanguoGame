@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"sanguoServer/server/game/logic"
+	"sanguoServer/server/game/mapconfig"
 )
 
 type NationalMap struct {
@@ -62,8 +62,8 @@ func (m *mapRes) Load() {
 		panic(err)
 	}
 
-	logic.Mapwidth = mapd.Width
-	logic.MapHeight = mapd.Height
+	mapconfig.Mapwidth = mapd.Width
+	mapconfig.MapHeight = mapd.Height
 
 	for index, v := range mapd.List{
 		//类型，就是这块土地上面是个啥玩意
@@ -71,15 +71,15 @@ func (m *mapRes) Load() {
 		//等级
 		l := int8(v[1])
 		nm := NationalMap{
-			X : index % logic.Mapwidth,
-			Y : index / logic.MapHeight,
+			X : index % mapconfig.Mapwidth,
+			Y : index / mapconfig.MapHeight,
 			MId: index,
 			Type: t,
 			Level: l,
 		}
 
 		m.Confs[index] = nm
-		if t == MapBuildFortress || t == MapBuildSysFortress{
+		if t == MapBuildFortress || t == MapBuildSysFortress {
 			m.SysBuild[index] = nm
 		}
 	}
