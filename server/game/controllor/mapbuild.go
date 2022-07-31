@@ -2,8 +2,11 @@ package controllor
 
 import (
 	"github.com/mitchellh/mapstructure"
+	model2 "sanguoServer/db/model"
 	"sanguoServer/net"
 	"sanguoServer/server/game/gameconfig"
+	"sanguoServer/server/game/logic"
+	"sanguoServer/server/game/model"
 	"sanguoServer/utils"
 )
 
@@ -11,9 +14,12 @@ type mapBuildHandler struct {
 
 }
 
+var DeafultMapBuildHandler = &mapBuildHandler{}
+
 func (h mapBuildHandler) Router(router *net.Router) {
 	n := router.Group("nationMap")
 	n.AddRouter("config", h.configHandler)
+	n.AddRouter("scanBlock", h.scanBlock)
 }
 
 func (h mapBuildHandler) configHandler(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
@@ -41,5 +47,24 @@ func (h mapBuildHandler) configHandler(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 	}
 }
 
-var DeafultMapBuildHandler = &mapBuildHandler{}
+func (n *mapBuildHandler) scanBlock(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
+	reqObj := &model.ScanBlockReq{}
+	rspObj := &model.ScanRsp{}
+	mapstructure.Decode(req.Body.Msg, reqObj)
+	rsp.Body.Msg = rspObj
+	rsp.Body.Code = utils.OK
+	//取出角色信息
+	r, _ := req.Conn.GetProperty("role")
+	role := r.(*model2.Role)
+	//扫描建筑
+	rm := logic.DefaultRoleBuildService.ScanBlock(reqObj)
+	rspObj.MRBuilds = rm
+	//扫描城池
+	rc := logic.RoleCity.ScanBlock(reqObj)
+	rspObj.MCBuilds = rc
+	//扫描军队
+	armys := logic.DefaultArmyService.ScanBlock(role.RId,reqObj)
+	rspObj.Armys = armys
+
+}
 

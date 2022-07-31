@@ -9,6 +9,7 @@ import (
 	"sanguoServer/server/common"
 	"sanguoServer/server/game/gameconfig"
 	"sanguoServer/server/game/logic"
+	"sanguoServer/server/game/middleware"
 	"sanguoServer/server/game/model"
 	"sanguoServer/utils"
 	"time"
@@ -21,9 +22,11 @@ type roleRouter struct{
 
 func (r *roleRouter) Router (router *net.Router){
 	g := router.Group("role")
-
+	g.Use(middleware.Log())
 	g.AddRouter("enterServer", r.enterRole)
-	g.AddRouter("myProperty", r.myProperty)
+	g.AddRouter("myProperty", r.myProperty, middleware.CheckRole())
+	g.AddRouter("posTagList", r.posTagList)
+	g.AddRouter("create", r.create)
 }
 
 func (r *roleRouter) enterRole (req *net.WsMsgReq, rsp *net.WsMsgRsp){
@@ -51,6 +54,17 @@ func (r *roleRouter) enterRole (req *net.WsMsgReq, rsp *net.WsMsgRsp){
 	uid := claim.Uid
 	//根据用户id 查找角色
 	role := &model2.Role{}
+	//新建事务
+	session := db.Eg.NewSession()
+	defer session.Close()
+	err = session.Begin()
+	if err != nil {
+		log.Println("事务开启失败")
+		rsp.Body.Code = utils.DBError
+		return
+	}
+	//保存一下事务
+	req.Context.Set("session", session)
 	ok, err := db.Eg.Table(role).Where("uid=?", uid).Get(role)
 	if err != nil {
 		log.Println("角色查询失败",err)
@@ -84,6 +98,13 @@ func (r *roleRouter) enterRole (req *net.WsMsgReq, rsp *net.WsMsgRsp){
 			Grain:         gameconfig.Base.Role.Grain,
 			Gold:          gameconfig.Base.Role.Gold,
 			Decree:        gameconfig.Base.Role.Decree}
+		_, err = session.Table(roleRes).Insert(roleRes)
+		if err != nil {
+			log.Println("角色资源插入失败",err)
+			rsp.Body.Code = utils.DBError
+			return
+		}
+
 	}
 
 	rspObj.RoleRes = roleRes.ToModel().(model.RoleRes)
@@ -97,18 +118,25 @@ func (r *roleRouter) enterRole (req *net.WsMsgReq, rsp *net.WsMsgRsp){
 	//把角色存一下
 	req.Conn.SetProperty("role", role)
 	//查询角色属性
-	if err := logic.RoleAttrServer.RoleAttributeHandler(rid); err != nil {
+	if err := logic.RoleAttrServer.RoleAttributeHandler(rid,session); err != nil {
+		session.Rollback()
 		rsp.Body.Code = utils.DBError
 		rsp.Body.Msg = "角色属性出错"
 		return
 	}
 	//玩家城池
-	if err := logic.RoleCity.RoleCityServer(rid,role.NickName); err != nil {
+	if err := logic.RoleCity.RoleCityServer(rid,role.NickName, session); err != nil {
+		session.Rollback()
 		rsp.Body.Code = utils.DBError
 		rsp.Body.Msg = "城池出错"
 		return
 	}
-
+	err = session.Commit()
+	if err != nil {
+		log.Println("事务提交失败")
+		rsp.Body.Code = utils.DBError
+		return
+	}
 	rsp.Body.Msg = rspObj
 	rsp.Body.Code = utils.OK
 }
@@ -129,12 +157,12 @@ func (r *roleRouter) myProperty(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 
 	rid := role.(*model2.Role).RId
 	//查资源
-	rspObj.RoleRes,err = logic.RoleServer.GetRoleRes(rid)
+	mrs,err := logic.RoleServer.GetRoleRes(rid)
 	if err != nil {
 		rsp.Body.Code = utils.DBError
 		return
 	}
-
+	rspObj.RoleRes = mrs.ToModel().(model.RoleRes)
 	//城池
 	rspObj.Citys,err = logic.RoleCity.GetCitys(rid)
 	if err != nil {
@@ -165,3 +193,62 @@ func (r *roleRouter) myProperty(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
 
 	rsp.Body.Msg = rspObj
 }
+
+func (r *roleRouter) posTagList(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
+	rspObj := &model.PosTagListRsp{}
+	role, err := req.Conn.GetProperty("role")
+	rsp.Body.Seq = req.Body.Seq
+	rsp.Body.Name = req.Body.Name
+	if err != nil {
+		rsp.Body.Code =utils.InvalidParam
+		return
+	}
+	rid := role.(*model2.Role).RId
+
+	rspObj.PosTags, err = logic.RoleAttrServer.GetPosTags(rid)
+	if err != nil {
+		log.Println(err)
+		rsp.Body.Code = err.(*common.MyError).Code()
+		return
+	}
+	rsp.Body.Code = utils.OK
+	rsp.Body.Msg = rspObj
+}
+
+//创建角色
+func (r *roleRouter) create(req *net.WsMsgReq, rsp *net.WsMsgRsp) {
+	reqObj := &model.CreateRoleReq{}
+	rspObj := &model.CreateRoleRsp{}
+	mapstructure.Decode(req.Body.Msg,reqObj)
+
+	rsp.Body.Seq = req.Body.Seq
+	rsp.Body.Name = req.Body.Name
+	role := &model2.Role{}
+	ok,err := db.Eg.Where("uid=?",reqObj.UId).Get(role)
+	if err!=nil  {
+		rsp.Body.Code = utils.DBError
+		return
+	}
+	if ok {
+		rsp.Body.Code = utils.RoleAlreadyCreate
+		return
+	}
+	role.UId = reqObj.UId
+	role.Sex = reqObj.Sex
+	role.NickName = reqObj.NickName
+	role.Balance = 0
+	role.HeadId = reqObj.HeadId
+	role.CreatedAt = time.Now()
+	role.LoginTime = time.Now()
+	_,err = db.Eg.InsertOne(role)
+	if err!=nil  {
+		rsp.Body.Code = utils.DBError
+		return
+	}
+	rspObj.Role = role.ToModel().(model.Role)
+	rsp.Body.Code = utils.OK
+	rsp.Body.Msg = rspObj
+}
+
+
+

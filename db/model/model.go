@@ -1,6 +1,7 @@
 package model
 
 import (
+	"sanguoServer/server/game/gameconfig"
 	"sanguoServer/server/game/model"
 	"sync"
 	"time"
@@ -86,14 +87,9 @@ type RoleAttribute struct {
 	CollectTimes    int8      		`xorm:"collect_times"`		//征收次数
 	LastCollectTime time.Time 		`xorm:"last_collect_time"`	//最后征收的时间
 	PosTags			string    		`xorm:"pos_tags"`			//位置标记
-	PosTagArray		[]PosTag		`xorm:"-"`
+	PosTagArray		[]model.PosTag		`xorm:"-"`
 }
 
-type PosTag struct {
-	X		int	`json:"x"`
-	Y		int	`json:"y"`
-	Name string `json:"name"`
-}
 //玩家城池
 type MapRoleCity struct {
 	mutex		sync.Mutex	`xorm:"-"`
@@ -136,47 +132,6 @@ type MapRoleBuild struct {
 	GiveUpTime 	int64 		`xorm:"giveUp_time"`
 }
 
-const (
-	ArmyCmdIdle   		= 0	//空闲
-	ArmyCmdAttack 		= 1	//攻击
-	ArmyCmdDefend 		= 2	//驻守
-	ArmyCmdReclamation 	= 3	//屯垦
-	ArmyCmdBack   		= 4 //撤退
-	ArmyCmdConscript  	= 5 //征兵
-	ArmyCmdTransfer  	= 6 //调动
-)
-
-const (
-	ArmyStop  		= 0
-	ArmyRunning  	= 1
-)
-
-//军队
-type Army struct {
-	Id             		int    		`xorm:"id pk autoincr"`
-	RId            		int    		`xorm:"rid"`
-	CityId         		int    		`xorm:"cityId"`
-	Order          		int8   		`xorm:"order"`
-	Generals       		string 		`xorm:"generals"`
-	Soldiers       		string 		`xorm:"soldiers"`
-	ConscriptTimes 		string 		`xorm:"conscript_times"`	//征兵结束时间，json数组
-	ConscriptCnts  		string 		`xorm:"conscript_cnts"`		//征兵数量，json数组
-	Cmd                	int8       	`xorm:"cmd"`
-	FromX              	int        	`xorm:"from_x"`
-	FromY              	int        	`xorm:"from_y"`
-	ToX                	int        	`xorm:"to_x"`
-	ToY                	int        	`xorm:"to_y"`
-	Start              	time.Time  	`json:"-"xorm:"start"`
-	End                	time.Time  	`json:"-"xorm:"end"`
-	State              	int8       	`xorm:"-"` 				//状态:0:running,1:stop
-	GeneralArray       	[]int      	`json:"-" xorm:"-"`
-	SoldierArray       	[]int      	`json:"-" xorm:"-"`
-	ConscriptTimeArray 	[]int64    	`json:"-" xorm:"-"`
-	ConscriptCntArray  	[]int      	`json:"-" xorm:"-"`
-	Gens               	[]*General 	`json:"-" xorm:"-"`
-	CellX              	int        	`json:"-" xorm:"-"`
-	CellY              	int        	`json:"-" xorm:"-"`
-}
 
 const (
 	GeneralNormal      	= 0 //正常
@@ -213,6 +168,83 @@ type General struct {
 }
 
 
+
+//技能
+type Skill struct {
+	Id             	int    `xorm:"id pk autoincr"`
+	RId          	int    `xorm:"rid"`
+	CfgId          	int    `xorm:"cfgId"`
+	BelongGenerals 	string `xorm:"belong_generals"`
+	Generals 		[]int  `xorm:"-"`
+}
+
+func NewSkill(rid int, cfgId int) *Skill{
+	return &Skill{
+		CfgId: cfgId,
+		RId: rid,
+		Generals: []int{},
+		BelongGenerals: "[]",
+	}
+}
+
+func (s *Skill) ToModel() interface{}{
+	p := model.Skill{}
+	p.Id = s.Id
+	p.CfgId = s.CfgId
+	p.Generals = s.Generals
+	return p
+}
+
+//战报
+type WarReport struct {
+	Id                	int    		`xorm:"id pk autoincr"`
+	AttackRid         	int    		`xorm:"a_rid"`
+	DefenseRid        	int    		`xorm:"d_rid"`
+	BegAttackArmy     	string 		`xorm:"b_a_army"`
+	BegDefenseArmy    	string 		`xorm:"b_d_army"`
+	EndAttackArmy     	string 		`xorm:"e_a_army"`
+	EndDefenseArmy    	string 		`xorm:"e_d_army"`
+	BegAttackGeneral  	string 		`xorm:"b_a_general"`
+	BegDefenseGeneral 	string 		`xorm:"b_d_general"`
+	EndAttackGeneral  	string 		`xorm:"e_a_general"`
+	EndDefenseGeneral 	string    	`xorm:"e_d_general"`
+	Result				int      	`xorm:"result"`	//0失败，1打平，2胜利
+	Rounds				string		`xorm:"rounds"` //回合
+	AttackIsRead      	bool      	`xorm:"a_is_read"`
+	DefenseIsRead     	bool      	`xorm:"d_is_read"`
+	DestroyDurable    	int       	`xorm:"destroy"`
+	Occupy            	int       	`xorm:"occupy"`
+	X                 	int       	`xorm:"x"`
+	Y                 	int       	`xorm:"y"`
+	CTime             	time.Time 	`xorm:"ctime"`
+}
+
+
+func (w *WarReport) ToModel() interface{}{
+	p := model.WarReport{}
+	p.CTime = int(w.CTime.UnixNano() / 1e6)
+	p.Id = w.Id
+	p.AttackRid = w.AttackRid
+	p.DefenseRid = w.DefenseRid
+	p.BegAttackArmy = w.BegAttackArmy
+	p.BegDefenseArmy = w.BegDefenseArmy
+	p.EndAttackArmy = w.EndAttackArmy
+	p.EndDefenseArmy = w.EndDefenseArmy
+	p.BegAttackGeneral = w.BegAttackGeneral
+	p.BegDefenseGeneral = w.BegDefenseGeneral
+	p.EndAttackGeneral = w.EndAttackGeneral
+	p.EndDefenseGeneral = w.EndDefenseGeneral
+	p.Result = w.Result
+	p.Rounds = w.Rounds
+	p.AttackIsRead = w.AttackIsRead
+	p.DefenseIsRead = w.DefenseIsRead
+	p.DestroyDurable = w.DestroyDurable
+	p.Occupy = w.Occupy
+	p.X = w.X
+	p.X = w.X
+	return p
+}
+
 func (r *Role) ToModel() interface{}{
 	m := model.Role{}
 	m.UId = r.UId
@@ -248,7 +280,7 @@ func (m *MapRoleCity) ToModel() interface{}{
 	p.X = m.X
 	p.Y = m.Y
 	p.CityId = m.CityId
-	p.UnionId = 0
+	p.UnionId = model.GetUnion(m.RId)
 	p.UnionName = ""
 	p.ParentId = 0
 	p.MaxDurable = 1000
@@ -311,23 +343,30 @@ func (g *General) ToModel() interface{}{
 	return p
 }
 
-func (a *Army) ToModel() interface{}{
-	p := model.Army{}
-	p.CityId = a.CityId
-	p.Id = a.Id
-	p.UnionId = 0
-	p.Order = a.Order
-	p.Generals = a.GeneralArray
-	p.Soldiers = a.SoldierArray
-	p.ConTimes = a.ConscriptTimeArray
-	p.ConCnts = a.ConscriptCntArray
-	p.Cmd = a.Cmd
-	p.State = a.State
-	p.FromX = a.FromX
-	p.FromY = a.FromY
-	p.ToX = a.ToX
-	p.ToY = a.ToY
-	p.Start = a.Start.Unix()
-	p.End = a.End.Unix()
-	return p
+
+func (m *MapRoleBuild) Init() {
+	if cfg := gameconfig.MapBuilder.BuildConfig(m.Type, m.Level); cfg != nil {
+		m.Name = cfg.Name
+		m.Level = cfg.Level
+		m.Type = cfg.Type
+		m.Wood = cfg.Wood
+		m.Iron = cfg.Iron
+		m.Stone = cfg.Stone
+		m.Grain = cfg.Grain
+		m.MaxDurable = cfg.Durable
+		m.CurDurable = cfg.Durable
+		m.Defender = cfg.Defender
+	}
 }
+
+func (m *MapRoleBuild) IsSysCity() bool {
+	return m.Type == gameconfig.MapBuildSysCity
+}
+func (m* MapRoleBuild) IsSysFortress() bool  {
+	return m.Type == gameconfig.MapBuildSysFortress
+}
+func (m* MapRoleBuild) IsRoleFortress() bool  {
+	return m.Type == gameconfig.MapBuildFortress
+}
+
+

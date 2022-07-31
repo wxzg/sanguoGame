@@ -7,15 +7,18 @@ import (
 
 // HandlerFunc 我们具体路由的业务处理函数
 type HandlerFunc func(req *WsMsgReq, rsp *WsMsgRsp)
-
+type MiddlewareFunc func(handlerFunc HandlerFunc) HandlerFunc
 type group struct {
 	prefix string
 	handlerMap map[string]HandlerFunc
+	middlewareMap map[string][]MiddlewareFunc
+	milldewares []MiddlewareFunc
 }
 
 // AddRouter 其实应该叫addHandlerFunc 就是给对应路由添加业务处理函数
-func (g *group) AddRouter(name string,handlerFunc HandlerFunc)  {
+func (g *group) AddRouter(name string,handlerFunc HandlerFunc, middlewares... MiddlewareFunc)  {
 	g.handlerMap[name] = handlerFunc
+	g.middlewareMap[name] = middlewares
 }
 
 //Group 根据前缀给路由新建一个路由组，返回一个Group，但这是router上的方法
@@ -23,22 +26,39 @@ func (r *Router) Group(prefix string) *group {
 	g := &group{
 		prefix: prefix,
 		handlerMap: make(map[string]HandlerFunc),
+		middlewareMap: map[string][]MiddlewareFunc{},
+		milldewares: make([]MiddlewareFunc,0),
 	}
 	r.group = append(r.group,g)
 	return g
 }
 
+func (g *group) Use (middlewares... MiddlewareFunc) {
+	g.milldewares = append(g.milldewares, middlewares...)
+}
+
 //exec方法就是在找到对应的路由组别以后，根据name匹配，将匹配到的具体路由的处理函数拿来处理
 func (g *group) exec(name string, req *WsMsgReq, rsp *WsMsgRsp) {
 	//根据具体路由（如login）匹配业务处理函数
-	h := g.handlerMap[name]
-	if h != nil {
+	h, ok := g.handlerMap[name]
+	if ok {
+		//先把中间件走一遍,这更是全局中间件比如account
+		for i := 0; i < len(g.milldewares); i++ {
+			h = g.milldewares[i](h)
+		}
+		//这个是具体业务的中间件比如login
+		m, ok := g.middlewareMap[name]
+		if ok {
+			for i := 0; i < len(m); i++ {
+				h = m[i](h)
+			}
+		}
 		//匹配到了就执行
 		h(req,rsp)
 	}else{
 		//如果是匹配不到再试试匹配“*”
-		gateh := g.handlerMap["*"]
-		if gateh != nil {
+		gateh, ok := g.handlerMap["*"]
+		if ok {
 			//如果匹配到了表示网关那边有处理函数，执行
 			gateh(req, rsp)
 		}else {

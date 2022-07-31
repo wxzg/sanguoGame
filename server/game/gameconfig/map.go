@@ -37,7 +37,7 @@ var MapRes = &mapRes{
 	Confs: make(map[int]NationalMap),
 	SysBuild: make(map[int]NationalMap),
 }
-const mapFile = "conf/gameconfig/map.json"
+const mapFile = "/conf/gameconfig/map.json"
 
 func (m *mapRes) Load() {
 

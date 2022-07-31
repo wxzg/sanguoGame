@@ -1,5 +1,7 @@
 package net
 
+import "sync"
+
 // 这个是前端传来的请求对应的JSON数据
 type ReqBody struct {
 	Seq     int64		`json:"seq"` 	//序列号
@@ -15,10 +17,33 @@ type RspBody struct {
 	Msg		interface{}	`json:"msg"`	//数据
 }
 
+type WsContext struct {
+	property map[string]interface{}
+	mutex sync.RWMutex
+}
+
+func (ws *WsContext) Set (key string, value interface{}) {
+	ws.mutex.Lock()
+	defer ws.mutex.Unlock()
+	ws.property[key] = value
+}
+
+func (ws *WsContext) Get (key string) interface{}{
+	ws.mutex.RLock()
+	defer ws.mutex.RUnlock()
+	value, ok := ws.property[key]
+	if !ok {
+		return nil
+	}
+
+	return value
+}
+
 // 将websocket连接和请求体封装一下
 type WsMsgReq struct {
 	Body	*ReqBody
 	Conn	WSConn
+	Context *WsContext
 }
 
 // 封装一下响应体

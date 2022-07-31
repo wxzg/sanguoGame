@@ -78,4 +78,26 @@ func (m *mapBuildConf) Load(){
 		panic(err)
 	}
 
+	for _, v := range m.Cfg{
+		_, ok := m.cfgMap[v.Type]
+		if !ok {
+			m.cfgMap[v.Type] = make([]cfg,0)
+		} else {
+			m.cfgMap[v.Type] = append(m.cfgMap[v.Type])
+		}
+	}
+
+}
+
+// 加载角色建筑配置
+func(m *mapBuildConf) BuildConfig(buildType, level int8) *cfg{
+	cfgs := m.cfgMap[buildType]
+
+	for _,v := range cfgs{
+		if v.Level == level{
+			return &v
+		}
+	}
+
+	return nil
 }
